@@ -1,0 +1,60 @@
+name: Deploy API to Cloud Run
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  REGION: ${{ vars.GCP_REGION }}
+  SERVICE_NAME: ${{ vars.CLOUD_RUN_SERVICE }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Enable required services (idempotent)
+        run: |
+          gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com --project "${PROJECT_ID}" | cat
+
+      - name: Deploy to Cloud Run from source
+        run: |
+          : "${REGION:=us-central1}"
+          : "${SERVICE_NAME:=seek-api}"
+          gcloud run deploy "${SERVICE_NAME}" \
+            --source . \
+            --region "${REGION}" \
+            --allow-unauthenticated \
+            --port 8080 | cat
+
+      - name: Fetch service URL
+        id: url
+        run: |
+          URL=$(gcloud run services describe "${SERVICE_NAME}" --region "${REGION}" --format 'value(status.url)')
+          echo "url=${URL}" >> $GITHUB_OUTPUT
+          echo "Deployed: ${URL}"
+
+      - name: Summary
+        run: |
+          echo "API deployed to: ${{ steps.url.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+
+
