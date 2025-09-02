@@ -21,6 +21,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate required secrets/vars
+        run: |
+          missing=0
+          [ -z "${{ secrets.GCP_WIF_PROVIDER }}" ] && echo "Missing secret: GCP_WIF_PROVIDER" && missing=1 || true
+          [ -z "${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}" ] && echo "Missing secret: GCP_SERVICE_ACCOUNT_EMAIL" && missing=1 || true
+          [ -z "${{ vars.GCP_PROJECT_ID }}" ] && echo "Missing variable: GCP_PROJECT_ID" && missing=1 || true
+          [ -z "${{ vars.GCP_REGION }}" ] && echo "Missing variable: GCP_REGION" && missing=1 || true
+          [ -z "${{ vars.CLOUD_RUN_SERVICE }}" ] && echo "Missing variable: CLOUD_RUN_SERVICE" && missing=1 || true
+          [ "$missing" = "1" ] && exit 1 || true
+
       - name: Authenticate to Google Cloud (WIF)
         uses: google-github-actions/auth@v2
         with:
@@ -36,15 +46,32 @@ jobs:
         run: |
           gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com --project "${PROJECT_ID}" | cat
 
-      - name: Deploy to Cloud Run from source
+      - name: Build image with Cloud Build (Dockerfile)
         run: |
           : "${REGION:=us-central1}"
           : "${SERVICE_NAME:=seek-api}"
+          IMAGE="gcr.io/${PROJECT_ID}/${SERVICE_NAME}:$GITHUB_SHA"
+          echo "Building ${IMAGE}"
+          gcloud builds submit --tag "${IMAGE}" | cat
+
+      - name: List services before deploy (debug)
+        run: |
+          gcloud run services list --region "${REGION}" --format='table(LOCATION,NAME,URL)' | cat
+
+      - name: Deploy to Cloud Run (Docker image)
+        run: |
+          : "${REGION:=us-central1}"
+          : "${SERVICE_NAME:=seek-api}"
+          IMAGE="gcr.io/${PROJECT_ID}/${SERVICE_NAME}:$GITHUB_SHA"
           gcloud run deploy "${SERVICE_NAME}" \
-            --source . \
+            --image "${IMAGE}" \
             --region "${REGION}" \
             --allow-unauthenticated \
             --port 8080 | cat
+
+      - name: List services after deploy (debug)
+        run: |
+          gcloud run services list --region "${REGION}" --format='table(LOCATION,NAME,URL)' | cat
 
       - name: Fetch service URL
         id: url
