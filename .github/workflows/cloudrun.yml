@@ -48,26 +48,24 @@ jobs:
           echo "Skipping API enablement in CI. Enable once via Cloud Shell:"
           echo "gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com"
 
-      - name: Build image with Cloud Build (Dockerfile)
+      - name: Configure Docker auth for Artifact Registry
+        run: |
+          : "${REGION:=us-central1}"
+          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet | cat
+
+      - name: Build and push image (Docker)
         run: |
           : "${REGION:=us-central1}"
           : "${SERVICE_NAME:=seek-api}"
           IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${SERVICE_NAME}/${SERVICE_NAME}:$GITHUB_SHA"
           echo "Building ${IMAGE}"
-          gcloud builds submit --tag "${IMAGE}" | cat
+          docker build -t "${IMAGE}" .
+          docker push "${IMAGE}"
+          echo "IMAGE=${IMAGE}" >> $GITHUB_ENV
 
       - name: Verify image exists in Artifact Registry
         run: |
-          : "${REGION:=us-central1}"
-          : "${SERVICE_NAME:=seek-api}"
-          IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${SERVICE_NAME}/${SERVICE_NAME}:$GITHUB_SHA"
-          echo "Verifying ${IMAGE}"
-          if ! gcloud artifacts docker images describe "${IMAGE}" >/dev/null 2>&1; then
-            echo "Image not found: ${IMAGE}" >&2
-            echo "Listing repository contents:" >&2
-            gcloud artifacts docker images list "${REGION}-docker.pkg.dev/${PROJECT_ID}/${SERVICE_NAME}" --include-tags --format='table(PACKAGE,VERSION,CREATE_TIME)' | cat
-            exit 1
-          fi
+          gcloud artifacts docker images describe "${IMAGE}" | cat
 
       - name: List services before deploy (debug)
         run: |
@@ -77,7 +75,6 @@ jobs:
         run: |
           : "${REGION:=us-central1}"
           : "${SERVICE_NAME:=seek-api}"
-          IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${SERVICE_NAME}/${SERVICE_NAME}:$GITHUB_SHA"
           gcloud run deploy "${SERVICE_NAME}" \
             --image "${IMAGE}" \
             --region "${REGION}" \
