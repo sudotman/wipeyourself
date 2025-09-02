@@ -56,6 +56,19 @@ jobs:
           echo "Building ${IMAGE}"
           gcloud builds submit --tag "${IMAGE}" | cat
 
+      - name: Verify image exists in Artifact Registry
+        run: |
+          : "${REGION:=us-central1}"
+          : "${SERVICE_NAME:=seek-api}"
+          IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${SERVICE_NAME}/${SERVICE_NAME}:$GITHUB_SHA"
+          echo "Verifying ${IMAGE}"
+          if ! gcloud artifacts docker images describe "${IMAGE}" >/dev/null 2>&1; then
+            echo "Image not found: ${IMAGE}" >&2
+            echo "Listing repository contents:" >&2
+            gcloud artifacts docker images list "${REGION}-docker.pkg.dev/${PROJECT_ID}/${SERVICE_NAME}" --include-tags --format='table(PACKAGE,VERSION,CREATE_TIME)' | cat
+            exit 1
+          fi
+
       - name: List services before deploy (debug)
         run: |
           gcloud run services list --region "${REGION}" --format='table(LOCATION,NAME,URL)' | cat
