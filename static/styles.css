@@ -1,0 +1,170 @@
+:root{
+	--bg-0:#0b0b0f;
+	--bg-1:#0f1117;
+	--fg-0:#e8e8ea;
+	--fg-1:#a9abb3;
+	--accent-0:#e84e89;
+	--accent-1:#5ad1e8;
+	--accent-2:#c6ff5c;
+}
+
+*{box-sizing:border-box}
+
+html,body{
+	margin:0;
+	padding:0;
+	height:100%;
+	background: radial-gradient(1200px 800px at 20% 10%, #121420 0%, var(--bg-1) 40%, var(--bg-0) 100%);
+	color:var(--fg-0);
+	font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+	overflow: hidden;
+}
+
+.site-header{
+	position: fixed;
+	top:0;left:0;right:0;
+	z-index: 10;
+	padding: 14px 20px;
+	display:flex;
+	align-items:center;
+	justify-content:space-between;
+	backdrop-filter: blur(8px);
+	background: linear-gradient(180deg, rgba(10,10,15,0.7), rgba(10,10,15,0.2) 60%, transparent);
+	border-bottom:1px solid rgba(255,255,255,0.06);
+}
+
+.brand{
+	font-family: "Archivo Black", Impact, sans-serif;
+	font-size: 22px;
+	letter-spacing: 1px;
+	text-transform: lowercase;
+	color: var(--accent-2);
+}
+
+.tag{font-size:12px;color:var(--fg-1)}
+
+#stage{
+	position:fixed;
+	top:0;left:0;right:0;bottom:0;
+	overflow:hidden;
+	cursor: grab;
+	touch-action: none;
+}
+#stage:active{cursor:grabbing}
+
+#canvas{
+	position:absolute;
+	left:50%;top:50%;
+	transform: translate(-50%, -50%);
+	width: 400vw;
+	height: 400vh;
+	will-change: transform;
+}
+
+#loading{
+	position:fixed;
+	left:50%;
+	top:50%;
+	transform: translate(-50%, -50%);
+	font-size:14px;
+	color:var(--fg-1);
+	opacity:.8;
+	animation: pulse 1.6s ease-in-out infinite;
+	pointer-events:none;
+}
+
+@keyframes pulse{0%{opacity:.25}50%{opacity:.9}100%{opacity:.25}}
+
+.site-footer{
+	position:fixed;
+	bottom:8px;left:12px;
+	font-size:12px;color:var(--fg-1);
+	opacity:.7
+}
+.site-footer a{color:var(--accent-1);text-decoration:none}
+.site-footer a:hover{text-decoration:underline}
+
+/* Image container */
+.art{
+	position:absolute;
+	left:50%; top:50%;
+	transform: translate(-50%, -50%);
+}
+
+.art-img{
+	display:block;
+	max-width: 28vw;
+	max-height: 42vh;
+	object-fit: cover;
+	filter: saturate(115%) contrast(108%) drop-shadow(0 6px 24px rgba(0,0,0,.45));
+	transition: transform .3s ease, opacity .6s ease;
+	opacity: .88;
+	border-radius: 8px;
+	mix-blend-mode: lighten;
+	will-change: transform, opacity;
+}
+.art-img.ready{opacity: .92}
+.art:hover .art-img{ transform: scale(1.04); opacity: .98; }
+
+/* Subtle grid dots for depth */
+#canvas::before{
+	content:"";
+	position:absolute;inset:0;
+	background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+	background-size: 30px 30px;
+	opacity:.2;
+	pointer-events:none;
+}
+
+.floating-btn{
+	position: fixed;
+	right: 16px;
+	bottom: 16px;
+	border: 1px solid rgba(255,255,255,.18);
+	background: rgba(20,20,30,.6);
+	color: var(--fg-0);
+	border-radius: 24px;
+	width: 40px; height: 40px;
+	backdrop-filter: blur(6px);
+	cursor: pointer;
+	transition: transform .2s ease, background .2s ease;
+	z-index: 20;
+}
+.floating-btn:hover{ transform: scale(1.06); background: rgba(25,25,35,.7); }
+
+.hint{
+	position: fixed;
+	left: 50%; bottom: 22px;
+	transform: translateX(-50%);
+	padding: 6px 10px;
+	font-size: 12px;
+	color: var(--fg-1);
+	background: rgba(20,20,30,.5);
+	border: 1px solid rgba(255,255,255,.12);
+	border-radius: 8px;
+	backdrop-filter: blur(5px);
+	pointer-events: none;
+	animation: fadeout 6s ease forwards;
+	z-index: 15;
+}
+@keyframes fadeout{ 0%{opacity:1} 70%{opacity:1} 100%{opacity:0} }
+
+/* During panning, allow smooth capture by disabling hit-tests on art */
+.panning .art, .panning .art *{ pointer-events: none !important; }
+
+/* Download button */
+.dl{
+	position:absolute;
+	top:6px; right:6px;
+	padding:4px 6px;
+	font-size:11px;
+	background: rgba(15,15,25,.7);
+	border:1px solid rgba(255,255,255,.15);
+	border-radius:6px;
+	color:var(--fg-0);
+	text-decoration:none;
+	opacity:0;
+	transform: translateY(-3px);
+	transition: opacity .2s ease, transform .2s ease;
+}
+.art:hover .dl{ opacity:1; transform: translateY(0); }
