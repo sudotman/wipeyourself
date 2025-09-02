@@ -42,15 +42,17 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      - name: Enable required services (idempotent)
+      - name: Ensure required services (owner-only; skip in CI)
+        continue-on-error: true
         run: |
-          gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com --project "${PROJECT_ID}" | cat
+          echo "Skipping API enablement in CI. Enable once via Cloud Shell:"
+          echo "gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com"
 
       - name: Build image with Cloud Build (Dockerfile)
         run: |
           : "${REGION:=us-central1}"
           : "${SERVICE_NAME:=seek-api}"
-          IMAGE="gcr.io/${PROJECT_ID}/${SERVICE_NAME}:$GITHUB_SHA"
+          IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${SERVICE_NAME}/${SERVICE_NAME}:$GITHUB_SHA"
           echo "Building ${IMAGE}"
           gcloud builds submit --tag "${IMAGE}" | cat
 
@@ -62,7 +64,7 @@ jobs:
         run: |
           : "${REGION:=us-central1}"
           : "${SERVICE_NAME:=seek-api}"
-          IMAGE="gcr.io/${PROJECT_ID}/${SERVICE_NAME}:$GITHUB_SHA"
+          IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${SERVICE_NAME}/${SERVICE_NAME}:$GITHUB_SHA"
           gcloud run deploy "${SERVICE_NAME}" \
             --image "${IMAGE}" \
             --region "${REGION}" \
