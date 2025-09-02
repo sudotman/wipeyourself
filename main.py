@@ -79,8 +79,10 @@ def healthz() -> Response:
 	return Response("ok", mimetype="text/plain")
 
 
-@app.get("/api/images")
+@app.route("/api/images", methods=["GET", "OPTIONS"])
 def api_images():
+	if request.method == "OPTIONS":
+		return Response("", status=204)
 	limit = request.args.get("limit", default=60, type=int)
 	limit = max(1, min(limit, 200))
 	force = request.args.get("refresh") in ("1", "true", "yes")
@@ -100,8 +102,10 @@ def api_images():
 	})
 
 
-@app.get("/proxy")
+@app.route("/proxy", methods=["GET", "OPTIONS"])
 def proxy():
+	if request.method == "OPTIONS":
+		return Response("", status=204)
 	url = request.args.get("url", type=str)
 	if not url:
 		return Response("missing url", status=400)
