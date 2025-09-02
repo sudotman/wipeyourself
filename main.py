@@ -66,6 +66,14 @@ def index() -> Response:
 	return send_from_directory(app.static_folder, "index.html")
 
 
+@app.after_request
+def add_cors_headers(resp: Response) -> Response:
+	resp.headers["Access-Control-Allow-Origin"] = "*"
+	resp.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+	resp.headers["Access-Control-Allow-Headers"] = "*"
+	return resp
+
+
 @app.get("/healthz")
 def healthz() -> Response:
 	return Response("ok", mimetype="text/plain")

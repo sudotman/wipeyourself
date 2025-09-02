@@ -195,3 +195,47 @@ html,body{
 }
 
 /* Remove in-image ESC badge visuals */
+
+.tray{
+	position: fixed;
+	left: 12px; bottom: 12px;
+	max-width: 50vw;
+	background: rgba(15,15,22,.6);
+	border: 1px solid rgba(255,255,255,.14);
+	border-radius: 12px;
+	backdrop-filter: blur(8px);
+	padding: 8px 10px;
+	box-shadow: 0 10px 30px rgba(0,0,0,.35);
+	z-index: 21;
+}
+.tray-head{ font-size:12px; color:var(--fg-1); margin-bottom:6px; }
+.tray-items{ display:flex; gap:8px; flex-wrap:wrap; }
+.tray-item{
+	position:relative;
+	width: 68px; height: 48px;
+	border-radius:6px; overflow:hidden;
+	border:1px solid rgba(255,255,255,.15);
+	cursor:pointer;
+	transition: transform .15s ease;
+}
+.tray-item:hover{ transform: translateY(-2px); }
+.tray-item img{ width:100%; height:100%; object-fit:cover; display:block; }
+.tray-item.active{ outline:2px solid var(--accent-1); }
+
+/* Lens icon */
+.lens{
+	position:absolute;
+	bottom:8px; left:8px;
+	width: 24px; height: 24px;
+	border-radius: 8px;
+	background: rgba(20,20,30,.72);
+	border:1px solid rgba(255,255,255,.18);
+	box-shadow: 0 4px 14px rgba(0,0,0,.35);
+	color:#e8e8ea; display:flex; align-items:center; justify-content:center;
+	backdrop-filter: blur(4px);
+	opacity:0; transform: translateY(3px);
+	transition: opacity .2s ease, transform .2s ease, background .2s ease;
+}
+.art:hover .lens, .expanded .lens{ opacity:1; transform: translateY(0); }
+.lens:hover{ background: rgba(28,28,40,.82); }
+.lens svg{ display:block; }
